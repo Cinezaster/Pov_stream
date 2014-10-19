@@ -3,12 +3,11 @@
 
 #include <Adafruit_NeoPixel.h>
 #include <stdio.h>
-#include <RF24.h>
-#include <SPI.h>
+//#include <SPI.h>
 
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(50, 5, NEO_GRB + NEO_KHZ800);
 
-RF24 radio(9, 10);  //teensy 3,0
+//RF24 radio(9, 10);  //teensy 3,0
 
 
 // Radio pipe addresses for the 2 nodes to communicate.
@@ -137,7 +136,7 @@ Serial.println(millis()-t);
   //printf_begin();
   Serial.println("RF24/examples/pongtest/\n");
  
-  radio.begin();
+  /*radio.begin();
   radio.setRetries(15,15);
 
 Serial.println("Setting up channel");
@@ -163,7 +162,7 @@ Serial.println("Setting up channel");
   
   Serial.println("End of setup process. Starting loop");
   
-  
+  */
   // getframe();
   
   attachInterrupt(3, interrupt, FALLING);
@@ -229,7 +228,7 @@ void loop(){
 } // forever loop
 
 
-void getframe() {
+/*void getframe() {
   
   while (c < 5120) {
     
@@ -258,7 +257,7 @@ void getframe() {
          Serial.print(" ");
          Serial.println();
          //delay(10);
-}
+}*/
 
 /*
 int get_y(int d, int a) {

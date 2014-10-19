@@ -1,5 +1,4 @@
 #include <Adafruit_NeoPixel.h>
-#include "TimerThree.h"
 
  
 #define PIN             5
@@ -10,12 +9,7 @@
  
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LEDS, PIN, NEO_GRB + NEO_KHZ800);
 
-elapsedMicros oneTurnElapsedTimer;
-IntervalTimer circleDivisionIntervalTimer;
-
-volatile int oneTurnElapsedTime;
-volatile int currentActiveDivision;
-int currentActiveDegrees[4];
+volatile boolean start= false;
 
 int pixel_grid_red[41][41] = {
   {76,87,105,112,127,134,138,113,116,90,70,59,59,37,28,31,23,23,88,68,42,99,34,46,41,46,37,32,41,40,40,34,36,33,44,36,50,47,48,59 },
@@ -138,45 +132,61 @@ byte pixel_grid_blue[41][41] = {{79,86,104,113,124,132,137,103,104,95,67,68,71,3
 ,79,88,86,91,87,69,70,61,54,51,51,29,35,39,36,37,43,38,36,33,97,92,61,73,62,69,71,68,68,71,67,58,66,66,54,62,65,52,49,43},{81
 ,79,86,104,91,109,128,114,91,71,55,68,57,32,26,34,42,38,35,40,45,213,100,72,78,69,71,72,61,68,74,66,60,70,62,64,50,52,62,68,56}};
 
+elapsedMicros afterOneLoop;
+elapsedMicros runTime;
+
+
+int delayTime;
+int totalTime;
+
+int pos;
+int rad;
+
 void oneTurnTime() {
-  oneTurnElapsedTime = oneTurnElapsedTimer;
-  oneTurnElapsedTimer = 0;
-  circleDivisionIntervalTimer.end();
-  circleDivisionIntervalTimer.begin(nextDivision,oneTurnElapsedTime/circleDivisions);
-  currentActiveDivision = 0;
+  start = true;
+  delayTime = (runTime - totalTime)/41;
 }
 
-void nextDivision() {
-  currentActiveDivision++;
-}
+
  
 void setup() {
-  circleDivisionIntervalTimer.priority(200);
-  circleDivisionIntervalTimer.begin(nextDivision,100000);
-
-  pinMode(intTriggerPin, INPUT); // sets the digital pin as output
-  attachInterrupt(intTriggerPin, oneTurnTime, FALLING); // interrrupt 1 is data ready
+  pinMode(intTriggerPin, INPUT);
+  attachInterrupt(intTriggerPin, oneTurnTime, RISING);
 
   strip.begin();
-  strip.setBrightness(64);
+  strip.setBrightness(180);
+
+  int beforePaint = afterOneLoop;
+  paint(0);
+  totalTime = afterOneLoop - beforePaint;
+  delayTime = (runTime - totalTime)/41;
 }
  
 void loop() {
-  for(int i=0; i<4; i++){
-      int currentRadius = currentActiveDivision + (i*(N_LEDS/spokes));   
-      for(int j=0; j< N_LEDS/spokes; j++){
-          strip.setPixelColor(j +(i*N_LEDS/spokes),strip.Color(pixel_grid_green[currentRadius%40][i+(j*spokes)]/4, pixel_grid_red[currentRadius%40][i+(j*spokes)]/4,pixel_grid_blue[currentRadius%40][i+(j*spokes)]/4));
-      }
-  }
-  strip.show();
-
-  if (currentActiveDivision > 40) {
-    currentActiveDivision = 0;
-  }
+  while(!start){}
+  start = false;
+  runTime = 0;
+  paint(constrain(delayTime, 0, 200000));
 }
 
-int discPosition(int pos){
-  int div = pos/spokes;
-  int rest = ((pos+spokes)%spokes)*(N_LEDS/spokes);
-  return rest+div;
+void paint(int del) {
+  for(int d=0; d<40; d++){
+      for(int i=0; i<4; i++){
+        int currentRadius = d + (i*10);   
+        for(int j=0; j< 10; j++){
+            pos = i+(j*spokes);
+            rad = currentRadius%40;
+            strip.setPixelColor(j +(i*10),strip.Color(pixel_grid_red[rad][pos], pixel_grid_green[rad][pos], pixel_grid_blue[rad][pos]));
+        }
+    }
+    strip.show();
+    if(start) {
+      return;
+    }
+    delayMicroseconds(del);
+  }
+  for(int i=0; i<40; i++){
+      strip.setPixelColor(i,strip.Color(0,0,0));
+  }
+  strip.show();
 }
